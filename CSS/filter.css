@@ -1,0 +1,63 @@
+#filter-controls {
+	position: static;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px;
+	z-index: auto;
+	padding: 0;
+	border-radius: 0;
+	background: transparent;
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+	border: none;
+	box-shadow: none;
+}
+
+.filter-title {
+	grid-column: 1 / -1;
+	color: #333;
+	font-size: 14px;
+	font-weight: bold;
+	margin-bottom: 0;
+	text-align: left;
+	text-shadow: none;
+}
+
+#filter-controls select,
+#filter-controls button {
+	font-size: 13px;
+	padding: 8px 12px;
+	font-weight: 600;
+	color: #333;
+	background: rgba(0, 0, 0, 0.08);
+	border: 1px solid rgba(0, 0, 0, 0.15);
+	border-radius: 6px;
+	text-shadow: none;
+	cursor: pointer;
+	transition: background 0.3s ease, border 0.3s ease;
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+	width: 100%;
+}
+
+#filter-controls button:hover,
+#filter-controls select:hover {
+	background: rgba(0, 0, 0, 0.15);
+	color: #222;
+	border-color: rgba(0, 0, 0, 0.3);
+}
+
+#filter-controls select option {
+	color: #000;
+	background: #fff;
+}
+
+@media (max-width: 768px) {
+	#filter-controls {
+		grid-template-columns: 1fr;
+	}
+
+	.filter-title {
+		grid-column: 1;
+	}
+}

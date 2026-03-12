@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <title>Recent Pokémon Cards</title>
+   <link rel="icon" type="image/png" href="apple-touch-icon.png" />
+   <link rel="stylesheet" href="CSS/recent.css" />
+   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+   <script src="https://kit.fontawesome.com/df00dcb1ce.js" crossorigin="anonymous"></script>
+</head>
+<body>
+   <div class="bg-particles" id="bg-particles"></div>
+
+   <header class="collection-header">
+      <div class="header-content">
+         <h1 class="collection-title">
+            <i class="fas fa-history"></i> Recently Viewed
+         </h1>
+         <p class="collection-subtitle" id="collection-subtitle">Loading your recent Pokémon...</p>
+      </div>
+      <div class="header-controls">
+         <div class="search-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" id="search-input" placeholder="Search recent Pokémon..." />
+         </div>
+         <select id="sort-select">
+            <option value="viewed_desc">Viewed: Newest</option>
+            <option value="viewed_asc">Viewed: Oldest</option>
+            <option value="name_asc">Name A-Z</option>
+            <option value="rarity">Rarity</option>
+         </select>
+         <select id="type-filter">
+            <option value="all">All Types</option>
+            <option value="fire">Fire</option>
+            <option value="water">Water</option>
+            <option value="grass">Grass</option>
+            <option value="electric">Electric</option>
+            <option value="psychic">Psychic</option>
+            <option value="ice">Ice</option>
+            <option value="dragon">Dragon</option>
+            <option value="dark">Dark</option>
+            <option value="fairy">Fairy</option>
+            <option value="fighting">Fighting</option>
+            <option value="poison">Poison</option>
+            <option value="ghost">Ghost</option>
+            <option value="rock">Rock</option>
+            <option value="ground">Ground</option>
+            <option value="flying">Flying</option>
+            <option value="bug">Bug</option>
+            <option value="steel">Steel</option>
+            <option value="normal">Normal</option>
+         </select>
+         <button class="anim-toggle-btn" id="anim-toggle-btn" type="button" aria-pressed="true">
+            <i class="fas fa-film"></i> Animations: On
+         </button>
+         <button class="reset-btn" id="reset-recents-btn">
+            <i class="fas fa-redo"></i> Clear Recents
+         </button>
+      </div>
+   </header>
+
+   <div class="stats-bar" id="stats-bar">
+      <div class="stat-chip">
+         <i class="fas fa-clock"></i>
+         <span id="stat-total">0</span> Total
+      </div>
+      <div class="stat-chip rarity-legendary">
+         <i class="fas fa-crown"></i>
+         <span id="stat-legendary">0</span> Legendary
+      </div>
+      <div class="stat-chip rarity-epic">
+         <i class="fas fa-gem"></i>
+         <span id="stat-epic">0</span> Mythical
+      </div>
+      <div class="stat-chip rarity-rare">
+         <i class="fas fa-radiation"></i>
+         <span id="stat-rare">0</span> Ultra Beast
+      </div>
+      <div class="stat-chip rarity-common">
+         <i class="fas fa-circle"></i>
+         <span id="stat-common">0</span> Common
+      </div>
+   </div>
+
+   <div class="empty-state" id="empty-state" style="display:none;">
+      <div class="pokeball-loader">
+         <div class="pokeball">
+            <div class="pokeball-top"></div>
+            <div class="pokeball-center"></div>
+            <div class="pokeball-bottom"></div>
+         </div>
+      </div>
+      <p id="empty-message">No recent Pokémon yet. Generate some cards first.</p>
+      <a href="index.html" class="go-home-btn"><i class="fas fa-bolt"></i> Generate a Card</a>
+   </div>
+
+   <main class="collection-grid" id="collection-grid"></main>
+
+   <div class="card-modal-overlay" id="card-modal-overlay">
+      <div class="card-modal" id="card-modal">
+         <button class="modal-close-btn" id="modal-close-btn"><i class="fas fa-times"></i></button>
+         <div class="modal-card-flip" id="modal-card-flip">
+            <div class="modal-card-inner">
+               <div class="modal-front" id="modal-front"></div>
+               <div class="modal-back" id="modal-back">
+                  <h3>Stats</h3>
+                  <div id="modal-stats"></div>
+                  <h3>Moves</h3>
+                  <p id="modal-moves"></p>
+                  <h3>Abilities</h3>
+                  <p id="modal-abilities"></p>
+               </div>
+            </div>
+         </div>
+         <div class="modal-actions">
+            <button class="modal-fav-btn" id="modal-open-btn"><i class="fas fa-external-link-alt"></i> Open Pokedex</button>
+            <button class="modal-delete-btn" id="modal-delete-btn"><i class="fas fa-trash"></i> Remove</button>
+         </div>
+      </div>
+   </div>
+
+   <div class="toast" id="toast"></div>
+
+   <div class="confirm-overlay" id="confirm-overlay" aria-hidden="true">
+      <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+         <h3 id="confirm-title">Confirm Action</h3>
+         <p id="confirm-message">Are you sure?</p>
+         <div class="confirm-actions">
+            <button class="confirm-cancel-btn" id="confirm-cancel-btn">Cancel</button>
+            <button class="confirm-ok-btn" id="confirm-ok-btn">Confirm</button>
+         </div>
+      </div>
+   </div>
+
+   <div class="back-btn-wrapper">
+      <a class="back-btn" href="index.html">
+         <i class="fas fa-home"></i> Back to Generator
+      </a>
+   </div>
+
+   <script src="Javascript/animation-toggle.js"></script>
+   <script src="Javascript/recent.js"></script>
+</body>
+</html>

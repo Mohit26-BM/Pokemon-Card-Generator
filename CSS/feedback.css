@@ -1,0 +1,200 @@
+body {
+	font-family: "Poppins", sans-serif;
+	margin: 0;
+	padding: 22px;
+	background: #0d0d1a url("../Images/feedback.jpg") no-repeat center center fixed;
+	background-size: cover;
+	color: #e9e8ff;
+	min-height: 100vh;
+	position: relative;
+}
+
+body::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background:
+		radial-gradient(circle at 20% 18%, rgba(74, 144, 218, 0.24), transparent 35%),
+		radial-gradient(circle at 82% 14%, rgba(171, 71, 188, 0.28), transparent 34%),
+		linear-gradient(145deg, rgba(12, 12, 26, 0.87), rgba(24, 17, 48, 0.84));
+	z-index: 0;
+}
+
+.container {
+	position: relative;
+	z-index: 1;
+	max-width: 700px;
+	margin: 42px auto;
+	padding: 32px;
+	background: linear-gradient(165deg, rgba(20, 20, 44, 0.9), rgba(30, 20, 54, 0.87));
+	-webkit-backdrop-filter: blur(6px);
+	backdrop-filter: blur(6px);
+	border-radius: 18px;
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+}
+
+.section-title {
+	text-align: center;
+	font-size: clamp(1.6rem, 3.2vw, 2.1rem);
+	margin: 0 0 6px;
+	letter-spacing: 0.3px;
+	background: linear-gradient(90deg, #6eb6ff, #ce93d8);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.contact-card h3 {
+	margin: 0 0 20px;
+	color: #c8a6ff;
+	font-size: 1.1rem;
+}
+
+.contact-form {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.form-group {
+	display: flex;
+	flex-direction: column;
+}
+
+label {
+	margin-bottom: 6px;
+	font-weight: 600;
+	color: #d4b8ff;
+	font-size: 0.93rem;
+}
+
+input,
+select,
+textarea {
+	padding: 11px 14px;
+	border-radius: 10px;
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	font-size: 0.95rem;
+	font-family: "Poppins", sans-serif;
+	background: rgba(255, 255, 255, 0.08);
+	color: #efeaff;
+	transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+	color: rgba(230, 215, 255, 0.5);
+}
+
+select option {
+	background: #201b38;
+	color: #efeaff;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+	border-color: #ab47bc;
+	background: rgba(171, 71, 188, 0.14);
+	outline: none;
+}
+
+textarea {
+	resize: vertical;
+	min-height: 110px;
+}
+
+.btn--form {
+	padding: 12px 22px;
+	font-size: 0.97rem;
+	font-family: "Poppins", sans-serif;
+	font-weight: 600;
+	background: linear-gradient(135deg, #4a90da, #ab47bc);
+	color: #fff;
+	border: none;
+	border-radius: 999px;
+	cursor: pointer;
+	box-shadow: 0 8px 18px rgba(46, 25, 84, 0.4);
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn--form:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 12px 22px rgba(46, 25, 84, 0.52);
+}
+
+.top-right-icons {
+	position: fixed;
+	top: 18px;
+	right: 22px;
+	display: flex;
+	gap: 12px;
+	z-index: 1000;
+}
+
+.top-right-icons .icon-pill {
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	padding: 9px 11px;
+	border-radius: 50%;
+	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+	transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.top-right-icons .icon-pill:hover {
+	background: rgba(171, 71, 188, 0.36);
+	transform: scale(1.1);
+}
+
+.top-right-icons .icon-pill i {
+	font-size: 1.15rem;
+	color: #d8b6ff;
+}
+
+.back-button-container {
+	position: relative;
+	z-index: 1;
+	text-align: center;
+	margin-top: 22px;
+	margin-bottom: 32px;
+}
+
+.back-btn {
+	display: inline-block;
+	padding: 11px 26px;
+	background: linear-gradient(135deg, #4a90da, #ab47bc);
+	color: #fff;
+	font-weight: 600;
+	font-size: 0.95rem;
+	border-radius: 999px;
+	text-decoration: none;
+	box-shadow: 0 8px 18px rgba(46, 25, 84, 0.4);
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.back-btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 12px 22px rgba(46, 25, 84, 0.52);
+}
+
+.back-btn i {
+	margin-right: 7px;
+}
+
+@media (max-width: 640px) {
+	body {
+		padding: 14px;
+	}
+
+	.container {
+		margin: 54px auto 20px;
+		padding: 20px;
+	}
+
+	.top-right-icons {
+		top: 10px;
+		right: 12px;
+		gap: 8px;
+	}
+}

@@ -1,0 +1,85 @@
+/* Hamburger menu toggle button */
+.navbar-toggle {
+	display: block;
+	background: none;
+	border: none;
+	font-size: 1.5rem;
+	color: #333;
+	cursor: pointer;
+	padding: 8px;
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	margin-left: auto;
+}
+
+.navbar-toggle:hover {
+	background: rgba(0, 0, 0, 0.1);
+}
+
+.navbar-toggle i {
+	display: block;
+	transition: transform 0.3s ease;
+}
+
+.navbar-toggle[aria-expanded="true"] i {
+	transform: rotate(180deg);
+}
+
+/* Collapsible navbar menu */
+.navbar-links.collapsed {
+	position: fixed;
+	top: 70px;
+	right: 0;
+	left: auto;
+	width: auto;
+	max-width: 350px;
+	background: rgba(255, 255, 255, 0.98);
+	-webkit-backdrop-filter: blur(10px);
+	backdrop-filter: blur(10px);
+	box-shadow: -2px 10px 20px rgba(0, 0, 0, 0.15);
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	padding: 15px 0;
+	border-radius: 0 0 0 12px;
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height 0.3s ease;
+	z-index: 998;
+}
+
+.navbar-links.collapsed.open {
+	max-height: 500px;
+}
+
+.navbar-links.collapsed .nav-link {
+	border-radius: 0;
+	padding: 12px 20px;
+	justify-content: flex-start;
+	width: 100%;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.navbar-links.collapsed .nav-link:last-child {
+	border-bottom: none;
+}
+
+.navbar-links.collapsed .nav-link:hover {
+	background: rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive breakures */
+@media (max-width: 900px) {
+	.navbar-links.collapsed {
+		right: 60px;
+		max-width: calc(100vw - 100px);
+	}
+
+	.navbar-links.collapsed.open {
+		max-width: calc(100vw - 100px);
+	}
+
+	.brand-subtitle {
+		display: none;
+	}
+}

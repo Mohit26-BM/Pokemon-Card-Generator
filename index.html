@@ -1,0 +1,433 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Pokémon Card Generator</title>
+      <link rel="icon" type="image/png" href="apple-touch-icon.png" />
+      <link
+         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+         rel="stylesheet"
+         />
+      <link rel="stylesheet" href="CSS/style.css" />
+      <link rel="stylesheet" href="CSS/navbar.css" />
+      <link rel="stylesheet" href="CSS/filter.css" />
+      <script
+         src="https://kit.fontawesome.com/df00dcb1ce.js"
+         crossorigin="anonymous"
+         ></script>
+      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4"></script>
+   </head>
+   <body>
+      <div id="welcome-screen">
+         <div class="welcome-bg-layer layer-a active" aria-hidden="true"></div>
+         <div class="welcome-bg-layer layer-b" aria-hidden="true"></div>
+         <div class="welcome-layout">
+            <section class="welcome-panel" aria-label="Sign up and start section">
+               <h1><span id="welcome-title"></span></h1>
+               <p><span id="welcome-subtext"></span></p>
+               <div class="auth-box" role="region" aria-label="Authentication forms">
+                  <div class="auth-tabs" role="tablist" aria-label="Auth tabs">
+                     <button type="button" id="tab-register" class="auth-tab active" role="tab" aria-selected="true" aria-controls="panel-register">Register</button>
+                     <button type="button" id="tab-signin" class="auth-tab" role="tab" aria-selected="false" aria-controls="panel-signin">Sign In</button>
+                  </div>
+                  <form id="panel-register" class="signup-form auth-panel active" action="#" method="post" role="tabpanel" aria-labelledby="tab-register">
+                     <h2>Create an Account</h2>
+                     <input type="text" name="name" placeholder="Trainer Name" />
+                     <input type="email" name="email" placeholder="Email Address" />
+                     <input type="password" name="password" placeholder="Password" />
+                     <div class="password-strength" id="strength-register" aria-live="polite">
+                        <div class="strength-bar"><div class="strength-fill" id="strength-fill-register"></div></div>
+                        <span class="strength-text" id="strength-text-register"></span>
+                     </div>
+                     <button type="button" id="register-btn">Register</button>
+                  </form>
+                  <form id="panel-signin" class="signup-form auth-panel" action="#" method="post" role="tabpanel" aria-labelledby="tab-signin" hidden>
+                     <h2>Welcome Back</h2>
+                     <input type="email" name="signin-email" placeholder="Email Address" />
+                     <input type="password" name="signin-password" placeholder="Password" />
+                     <div class="password-strength" id="strength-signin" aria-live="polite">
+                        <div class="strength-bar"><div class="strength-fill" id="strength-fill-signin"></div></div>
+                        <span class="strength-text" id="strength-text-signin"></span>
+                     </div>
+                     <button type="button" id="signin-btn">Sign In</button>
+                  </form>
+               </div>
+            </section>
+         </div>
+      </div>
+      <div class="container" style="display: none">
+         <!-- Top Navigation Bar -->
+         <nav id="top-navbar">
+            <div class="navbar-brand">
+               <h1 class="brand-title">Pokémon Card Generator</h1>
+            </div>
+            <button id="navbar-toggle" class="navbar-toggle" aria-label="Toggle menu" aria-expanded="false">
+               <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="navbar-links collapsed" id="navbar-menu">
+               <button id="pokemon-day-btn" class="nav-link" type="button">
+                  <i class="fas fa-sun"></i> Pokemon of the Day
+               </button>
+               <button id="guess-pokemon-btn" class="nav-link" type="button">
+                  <i class="fas fa-question-circle"></i> Who's That Pokemon?
+               </button>
+               <a href="about.html" class="nav-link">
+                  <i class="fas fa-info-circle"></i> About
+               </a>
+                  <a href="feedback.html" class="nav-link">
+                     <i class="fas fa-envelope"></i> Feedback
+                  </a>
+               <div class="nav-profile-menu" id="nav-profile-menu">
+                  <button id="nav-profile-trigger" class="nav-link nav-profile-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+                     <img id="nav-profile-avatar" class="nav-profile-avatar" src="Images/default-avatar.png" alt="Trainer avatar" />
+                     <span id="nav-profile-name">Profile</span>
+                     <i class="fas fa-chevron-down"></i>
+                  </button>
+                  <div id="nav-profile-dropdown" class="nav-profile-dropdown" role="menu" aria-label="Profile options">
+                     <a href="profile.html" class="nav-profile-option" role="menuitem">
+                        <i class="fas fa-user-circle"></i> Profile
+                     </a>
+                     <a href="recent.html" class="nav-profile-option" role="menuitem">
+                        <i class="fas fa-history"></i> Recent
+                     </a>
+                     <a href="collection.html" class="nav-profile-option" role="menuitem">
+                        <i class="fas fa-layer-group"></i> Collection
+                     </a>
+                     <a href="teams.html" class="nav-profile-option" role="menuitem">
+                        <i class="fas fa-people-group"></i> My Teams
+                     </a>
+                     <button id="nav-anim-toggle-option" class="nav-profile-option" type="button" role="menuitem">
+                        <i class="fas fa-film"></i> Animations: On
+                     </button>
+                     <button id="nav-signout-option" class="nav-profile-option nav-profile-signout" type="button" role="menuitem">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                     </button>
+                  </div>
+               </div>
+            </div>
+         </nav>
+         <div class="generator-stage">
+            <aside class="generator-left">
+               <div class="search-wrapper">
+                  <section id="controls-panel" class="controls-panel" role="region" aria-label="Generator controls">
+                     <div class="controls-hero">
+                        <p class="panel-kicker">Live Controls</p>
+                        <h2 class="controls-title">Radar, Search, Filters</h2>
+                        <p class="controls-summary">Compare stat profiles, search by name, and tune the next card without the old menu clutter.</p>
+                     </div>
+                     <button id="save-current-card" title="Save current card to your collection">
+                        <i class="fas fa-bookmark"></i> Save Current Card
+                     </button>
+                     <div class="search-row">
+                        <input type="text" id="search-input" placeholder="Search Pokémon..." />
+                        <button id="search-btn" title="Search">🔍</button>
+                     </div>
+                     <div class="radar-panel">
+                        <div class="radar-heading">
+                           <h3 class="filter-title">Stat Radar</h3>
+                           <div class="radar-help">
+                              <button
+                                 type="button"
+                                 class="radar-help-button"
+                                 aria-label="Explain how the stat radar works"
+                                 aria-describedby="radar-help-text"
+                                 >?</button>
+                              <div class="radar-help-tooltip" id="radar-help-text" role="tooltip">
+                                 Each point shows one base stat: HP, Attack, Defense, Special Attack, Special Defense, and Speed. Bigger coverage means stronger raw totals in more areas, while spikes show specialization. Compare shapes to judge whether a Pokémon is balanced, bulky, fast, or offense-focused.
+                              </div>
+                           </div>
+                        </div>
+                        <div class="radar-canvas-wrap">
+                           <canvas id="stats-radar-chart" width="420" height="320" aria-label="Pokemon stats radar chart"></canvas>
+                        </div>
+                        <div class="radar-actions">
+                           <label class="sr-only" for="radar-compare-select">Select Pokemon to compare on the radar chart</label>
+                           <select id="radar-compare-select" aria-label="Select Pokemon to compare on the radar chart">
+                              <option value="">Select Pokemon to compare</option>
+                           </select>
+                           <button id="add-radar-compare" type="button">Compare Selected</button>
+                           <button id="clear-radar-compare" type="button">Clear Compare</button>
+                        </div>
+                     </div>
+                     <div id="filter-controls">
+                        <h3 class="filter-title">Filter Pokémon</h3>
+                        <select id="filter-type1">
+                           <option value="">Type 1</option>
+                           <option value="bug">Bug</option>
+                           <option value="dark">Dark</option>
+                           <option value="dragon">Dragon</option>
+                           <option value="electric">Electric</option>
+                           <option value="fairy">Fairy</option>
+                           <option value="fighting">Fighting</option>
+                           <option value="fire">Fire</option>
+                           <option value="flying">Flying</option>
+                           <option value="ghost">Ghost</option>
+                           <option value="grass">Grass</option>
+                           <option value="ground">Ground</option>
+                           <option value="ice">Ice</option>
+                           <option value="normal">Normal</option>
+                           <option value="poison">Poison</option>
+                           <option value="psychic">Psychic</option>
+                           <option value="rock">Rock</option>
+                           <option value="steel">Steel</option>
+                           <option value="water">Water</option>
+                        </select>
+                        <select id="filter-type2">
+                           <option value="">Type 2</option>
+                           <option value="bug">Bug</option>
+                           <option value="dark">Dark</option>
+                           <option value="dragon">Dragon</option>
+                           <option value="electric">Electric</option>
+                           <option value="fairy">Fairy</option>
+                           <option value="fighting">Fighting</option>
+                           <option value="fire">Fire</option>
+                           <option value="flying">Flying</option>
+                           <option value="ghost">Ghost</option>
+                           <option value="grass">Grass</option>
+                           <option value="ground">Ground</option>
+                           <option value="ice">Ice</option>
+                           <option value="normal">Normal</option>
+                           <option value="poison">Poison</option>
+                           <option value="psychic">Psychic</option>
+                           <option value="rock">Rock</option>
+                           <option value="steel">Steel</option>
+                           <option value="water">Water</option>
+                        </select>
+                        <select id="filter-region">
+                           <option value="">Region</option>
+                           <option value="Kanto">Kanto</option>
+                           <option value="Johto">Johto</option>
+                           <option value="Hoenn">Hoenn</option>
+                           <option value="Sinnoh">Sinnoh</option>
+                           <option value="Unova">Unova</option>
+                           <option value="Kalos">Kalos</option>
+                           <option value="Alola">Alola</option>
+                           <option value="Galar">Galar</option>
+                           <option value="Paldea">Paldea</option>
+                        </select>
+                        <select id="filter-rarity">
+                           <option value="">Rarity</option>
+                           <option value="common">Common</option>
+                           <option value="legendary">Legendary</option>
+                           <option value="mythical">Mythical</option>
+                           <option value="ultra">Ultra Beast</option>
+                        </select>
+                        <button id="apply-filters">Apply Filters</button>
+                        <button id="reset-filters">Reset Filters</button>
+                     </div>
+                  </section>
+               </div>
+            </aside>
+            <section class="generator-center">
+               <div id="flip-container" class="flip-container">
+                  <div class="flipper">
+                     <div class="front card" id="card">
+                        <div class="top-bar">
+                           <div class="badge rarity" id="rarity">--</div>
+                           <div class="badge hp">HP: <span id="hp">--</span></div>
+                           <div class="badge xp">XP: <span id="xp">--</span></div>
+                        </div>
+                        <h2 id="poke-name">Pokémon Name</h2>
+                        <div class="poke-id" id="poke-id">#---</div>
+                        <div class="img-container" id="img-container">
+                           <img id="poke-img" src="" alt="Pokémon" />
+                        </div>
+                        <div class="types" id="types"></div>
+                        <div class="stats">
+                           <div>
+                              <h3 id="atk">--</h3>
+                              <p>Attack</p>
+                           </div>
+                           <div>
+                              <h3 id="def">--</h3>
+                              <p>Defense</p>
+                           </div>
+                           <div>
+                              <h3 id="spd">--</h3>
+                              <p>Speed</p>
+                           </div>
+                        </div>
+                        <div class="info-list">
+                           <p><strong>Region:</strong> <span id="region">--</span></p>
+                           <p><strong>Top Moves:</strong> <span id="moves">--</span></p>
+                           <p><strong>Height:</strong> <span id="height">--</span></p>
+                           <p><strong>Weight:</strong> <span id="weight">--</span></p>
+                           <p><strong>Abilities:</strong> <span id="abilities">--</span></p>
+                        </div>
+                     </div>
+                     <!--  Back Side of Card -->
+                     <div class="back card">
+                        <img src="Images/card.png" alt="Card back" class="card-back-img" />
+                     </div>
+                  </div>
+               </div>
+               <div class="btn-row">
+                  <button id="generate">Generate a Random</button>
+               </div>
+            </section>
+            <aside class="generator-right">
+               <section class="analysis-panel" id="analysis-panel" aria-label="Current Pokemon analysis">
+                  <div class="analysis-hero">
+                     <p class="analysis-kicker">Live Analysis</p>
+                     <h2 id="analysis-name">No Pokémon Loaded</h2>
+                     <p id="analysis-summary">Generate a Pokémon and this space will fill the right side of the page instead of leaving it vacant.</p>
+                  </div>
+                  <div class="analysis-section">
+                     <h3>Current Types</h3>
+                     <div class="analysis-chip-row" id="analysis-types">
+                        <span class="analysis-placeholder">Waiting for a card...</span>
+                     </div>
+                  </div>
+                  <div class="analysis-section">
+                     <h3>Evolution Chain</h3>
+                     <div class="analysis-evolution" id="analysis-evolution">
+                        <span class="analysis-placeholder">Generate a Pokémon to inspect evolutions.</span>
+                     </div>
+                  </div>
+                  <div class="analysis-columns">
+                     <div class="analysis-section compact">
+                        <h3>Weak Against</h3>
+                        <div class="analysis-chip-row" id="analysis-weak-against">
+                           <span class="analysis-placeholder">-</span>
+                        </div>
+                     </div>
+                     <div class="analysis-section compact">
+                        <h3>Strong Against</h3>
+                        <div class="analysis-chip-row" id="analysis-strong-against">
+                           <span class="analysis-placeholder">-</span>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="analysis-columns">
+                     <div class="analysis-section compact">
+                        <h3>Region</h3>
+                        <p id="analysis-region">--</p>
+                     </div>
+                     <div class="analysis-section compact">
+                        <h3>Habitat</h3>
+                        <p id="analysis-habitat">--</p>
+                     </div>
+                  </div>
+                  <div class="analysis-columns">
+                     <div class="analysis-section compact">
+                        <h3>Catch Rate</h3>
+                        <p id="analysis-catch-rate">--</p>
+                     </div>
+                     <div class="analysis-section compact">
+                        <h3>Happiness</h3>
+                        <p id="analysis-happiness">--</p>
+                     </div>
+                  </div>
+                  <div class="analysis-section">
+                     <h3>Top Moves</h3>
+                     <p id="analysis-moves">--</p>
+                  </div>
+               </section>
+            </aside>
+         </div>
+      </div>
+      <!-- Global Alert Box -->
+      <div id="custom-alert" class="hidden">
+         <p id="custom-alert-message">This is a message</p>
+      </div>
+      <div id="pokemon-day-modal" class="pokemon-day-modal hidden" aria-hidden="true">
+         <div class="pokemon-day-dialog" role="dialog" aria-modal="true" aria-labelledby="pokemon-day-name">
+            <button id="pokemon-day-close" class="pokemon-day-close" type="button" aria-label="Close Pokemon of the Day">
+               <i class="fas fa-times"></i>
+            </button>
+            <div class="pokemon-day-header">
+               <div>
+                  <p class="pokemon-day-kicker">Today's Spotlight</p>
+                  <h2 id="pokemon-day-name">Loading...</h2>
+                  <p id="pokemon-day-date" class="pokemon-day-date">Fetching today's featured Pokemon</p>
+               </div>
+               <span id="pokemon-day-rarity" class="pokemon-day-rarity">Common</span>
+            </div>
+            <div class="pokemon-day-layout">
+               <section class="pokemon-day-visual">
+                  <div class="pokemon-day-art-shell" id="pokemon-day-art-shell">
+                     <img id="pokemon-day-image" src="" alt="Pokemon of the Day" />
+                  </div>
+                  <div class="pokemon-day-toggle-row">
+                     <button id="pokemon-day-shiny-toggle" class="pokemon-day-mini-btn" type="button">
+                        <i class="fas fa-star"></i> Shiny: Off
+                     </button>
+                     <button id="pokemon-day-variant-toggle" class="pokemon-day-mini-btn" type="button" disabled>
+                        <i class="fas fa-code-branch"></i> Variant: Base
+                     </button>
+                  </div>
+                  <div id="pokemon-day-types" class="pokemon-day-types"></div>
+               </section>
+               <section class="pokemon-day-info">
+                  <p id="pokemon-day-flavor" class="pokemon-day-flavor">Loading Pokedex details...</p>
+                  <div class="pokemon-day-stats-grid">
+                     <div class="pokemon-day-stat"><span class="pokemon-day-stat-value" id="pokemon-day-hp">--</span><span class="pokemon-day-stat-label">HP</span></div>
+                     <div class="pokemon-day-stat"><span class="pokemon-day-stat-value" id="pokemon-day-attack">--</span><span class="pokemon-day-stat-label">Attack</span></div>
+                     <div class="pokemon-day-stat"><span class="pokemon-day-stat-value" id="pokemon-day-defense">--</span><span class="pokemon-day-stat-label">Defense</span></div>
+                     <div class="pokemon-day-stat"><span class="pokemon-day-stat-value" id="pokemon-day-speed">--</span><span class="pokemon-day-stat-label">Speed</span></div>
+                     <div class="pokemon-day-stat"><span class="pokemon-day-stat-value" id="pokemon-day-height">--</span><span class="pokemon-day-stat-label">Height</span></div>
+                     <div class="pokemon-day-stat"><span class="pokemon-day-stat-value" id="pokemon-day-weight">--</span><span class="pokemon-day-stat-label">Weight</span></div>
+                  </div>
+                  <div class="pokemon-day-detail-grid">
+                     <div class="pokemon-day-detail-block"><h3>Region</h3><p id="pokemon-day-region">--</p></div>
+                     <div class="pokemon-day-detail-block"><h3>Habitat</h3><p id="pokemon-day-habitat">--</p></div>
+                     <div class="pokemon-day-detail-block"><h3>Abilities</h3><p id="pokemon-day-abilities">--</p></div>
+                     <div class="pokemon-day-detail-block"><h3>Evolution Line</h3><p id="pokemon-day-evolution">--</p></div>
+                  </div>
+                  <div class="pokemon-day-detail-block pokemon-day-moves-block"><h3>Top Moves</h3><p id="pokemon-day-moves">--</p></div>
+               </section>
+            </div>
+            <div class="pokemon-day-actions">
+               <button id="pokemon-day-save" class="pokemon-day-primary" type="button"><i class="fas fa-bookmark"></i> Save to Collection</button>
+               <button id="pokemon-day-load" class="pokemon-day-secondary" type="button"><i class="fas fa-bolt"></i> Load on Generator</button>
+            </div>
+         </div>
+      </div>
+      <div id="guess-pokemon-modal" class="guess-pokemon-modal hidden" aria-hidden="true">
+         <div class="guess-pokemon-dialog" role="dialog" aria-modal="true" aria-labelledby="guess-pokemon-title">
+            <button id="guess-pokemon-close" class="guess-pokemon-close" type="button" aria-label="Close Guess The Pokemon">
+               <i class="fas fa-times"></i>
+            </button>
+            <div class="guess-pokemon-header">
+               <h2 id="guess-pokemon-title">Who's That Pokemon?</h2>
+               <div class="guess-pokemon-timer-wrap">
+                  <span class="guess-pokemon-timer-label">Time Left</span>
+                  <span id="guess-pokemon-timer" class="guess-pokemon-timer">20s</span>
+               </div>
+            </div>
+            <p class="guess-pokemon-subtitle">Guess before the timer ends. Choose an option or type the name.</p>
+            <div class="guess-pokemon-image-wrap">
+               <img id="guess-pokemon-image" src="" alt="Guess this Pokemon" class="guess-pokemon-image silhouette" />
+            </div>
+            <div id="guess-pokemon-options" class="guess-pokemon-options"></div>
+            <div class="guess-pokemon-input-row">
+               <input id="guess-pokemon-input" type="text" placeholder="Enter Pokemon name" autocomplete="off" />
+               <button id="guess-pokemon-submit" type="button">Guess</button>
+            </div>
+            <p id="guess-pokemon-result" class="guess-pokemon-result">Ready for a new round?</p>
+            <div id="guess-pokemon-reveal" class="guess-pokemon-reveal hidden">
+               <p><strong>Name:</strong> <span id="guess-pokemon-name">--</span></p>
+               <p><strong>Types:</strong> <span id="guess-pokemon-types">--</span></p>
+               <p><strong>Top Moves:</strong> <span id="guess-pokemon-moves">--</span></p>
+            </div>
+            <div class="guess-pokemon-actions">
+               <button id="guess-pokemon-new" type="button"><i class="fas fa-dice"></i> New Pokemon</button>
+            </div>
+         </div>
+      </div>
+      <script src="Javascript/supabase-client.js"></script>
+      <script src="Javascript/animation-toggle.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      <script src="Javascript/script.js"></script>
+      <script src="Javascript/welcome.js"></script>
+      <script>
+         document.addEventListener("keydown", (e) => {
+           if (e.shiftKey && e.key.toLowerCase() === "w") {
+             document.getElementById("welcome-screen").style.display = "block";
+             document.querySelector(".container").style.display = "none";
+           }
+         });
+      </script>
+   </body>
+</html>

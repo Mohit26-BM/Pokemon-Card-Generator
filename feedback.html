@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Feedback</title>
+      <link rel="icon" type="image/png" href="apple-touch-icon.png" />
+      <link rel="stylesheet" href="CSS/feedback.css" />
+      <link
+         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+         rel="stylesheet"
+         />
+      <script
+         src="https://kit.fontawesome.com/df00dcb1ce.js"
+         crossorigin="anonymous"
+         ></script>
+   </head>
+   <body>
+      <!-- Top-right social icons -->
+      <div class="top-right-icons">
+         <a href="https://github.com/Mohit26-BM" target="_blank" rel="noopener" title="GitHub" class="icon-pill">
+            <i class="fab fa-github"></i>
+         </a>
+         <a href="https://www.linkedin.com/in/mohit26bali/" target="_blank" rel="noopener" title="LinkedIn" class="icon-pill">
+            <i class="fab fa-linkedin"></i>
+         </a>
+         <a href="mailto:m26ohitbali@gmail.com" title="Email" class="icon-pill">
+            <i class="fas fa-envelope"></i>
+         </a>
+      </div>
+
+      <div class="container">
+         <h2 class="section-title">Get in Touch</h2>
+         <div class="contact-card">
+            <h3><i class="fas fa-paper-plane"></i> Send a Message</h3>
+            <form class="contact-form" action="https://api.web3forms.com/submit" method="POST">
+               <input type="hidden" name="access_key" value="e98bec84-ca81-408e-99cb-aa6c6d3e3210" />
+               <div class="form-group">
+                  <label for="full-name"><i class="fas fa-user"></i> Full Name</label>
+                  <input id="full-name" type="text" name="name" placeholder="John Doe" required />
+               </div>
+               <div class="form-group">
+                  <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+                  <input id="email" type="email" name="email" placeholder="me@example.com" required />
+               </div>
+               <div class="form-group">
+                  <label for="purpose"><i class="fas fa-handshake"></i> Purpose</label>
+                  <select id="purpose" name="purpose" required>
+                     <option value="">Choose an option</option>
+                     <option value="collaboration">Collaboration</option>
+                     <option value="hiring">Hiring Opportunity</option>
+                     <option value="feedback">Feedback</option>
+                     <option value="project">Project Inquiry</option>
+                     <option value="other">Other</option>
+                  </select>
+               </div>
+               <div class="form-group">
+                  <label for="message"><i class="fas fa-comment"></i> Message</label>
+                  <textarea id="message" name="message" placeholder="Your message here..." required></textarea>
+               </div>
+               <button type="submit" class="btn btn--form"><i class="fas fa-paper-plane"></i> Send Message</button>
+            </form>
+         </div>
+      </div>
+
+      <div class="back-button-container">
+         <a href="index.html" class="back-btn">
+            <i class="fas fa-home"></i> Back to Home
+         </a>
+      </div>
+   </body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Teams - Pokemon Card Generator</title>
+  <link rel="icon" type="image/png" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="CSS/teams.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/df00dcb1ce.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4"></script>
+</head>
+<body>
+  <header class="teams-topbar">
+    <div class="teams-brand">
+      <h1><i class="fas fa-people-group"></i> My Teams</h1>
+      <p>Build squads and run 1v1 or 6v6 battles.</p>
+    </div>
+    <nav class="teams-nav">
+      <a href="index.html"><i class="fas fa-bolt"></i> Generator</a>
+      <a href="recent.html"><i class="fas fa-history"></i> Recent</a>
+      <a href="collection.html"><i class="fas fa-layer-group"></i> Collection</a>
+      <a href="about.html"><i class="fas fa-info-circle"></i> About</a>
+      <a href="profile.html"><i class="fas fa-user-circle"></i> Profile</a>
+      <button id="anim-toggle-btn" class="teams-nav-toggle" type="button" aria-pressed="true">
+        <i class="fas fa-film"></i> Animations: On
+      </button>
+    </nav>
+  </header>
+
+  <main class="teams-layout">
+    <section class="panel team-builder" aria-label="Team builder">
+      <div class="panel-head">
+        <h2>Team Builder</h2>
+        <span id="team-counter" class="chip">0 / 6</span>
+      </div>
+
+      <div class="form-grid">
+        <input id="team-name" type="text" placeholder="Team name" maxlength="60" />
+        <input id="team-description" type="text" placeholder="Team description (optional)" maxlength="120" />
+      </div>
+
+      <div class="builder-actions">
+        <button id="save-team-btn" class="btn primary"><i class="fas fa-save"></i> Save Team</button>
+        <button id="clear-team-btn" class="btn ghost"><i class="fas fa-broom"></i> Clear Slots</button>
+      </div>
+
+      <div class="slot-grid" id="slot-grid" aria-live="polite"></div>
+
+      <div class="sub-head">
+        <h3>Your Captured Pokemon</h3>
+        <input id="pool-search" type="text" placeholder="Search by name..." />
+      </div>
+      <div class="pool-list" id="pool-list"></div>
+    </section>
+
+    <section class="panel saved-teams" aria-label="Saved teams">
+      <div class="panel-head">
+        <h2>Saved Teams</h2>
+        <span id="saved-count" class="chip">0</span>
+      </div>
+      <div id="saved-teams-list" class="saved-list"></div>
+    </section>
+
+    <section class="panel battle-arena" aria-label="Battle arena">
+      <div class="panel-head">
+        <h2>Battle Arena</h2>
+        <div class="mode-toggle">
+          <button id="mode-1v1" class="btn tiny active" data-mode="1v1">1v1</button>
+          <button id="mode-6v6" class="btn tiny" data-mode="6v6">6v6</button>
+        </div>
+      </div>
+
+      <div class="battle-controls compact">
+        <label>
+          You
+          <select id="player-team-select"></select>
+        </label>
+        <label>
+          Opponent
+          <select id="opponent-team-select"></select>
+        </label>
+      </div>
+
+      <div id="duel-slot-pickers" class="battle-controls compact">
+        <label>
+          Your Slot (1v1)
+          <select id="player-slot-select"></select>
+        </label>
+        <label>
+          Opponent Slot (1v1)
+          <select id="opponent-slot-select"></select>
+        </label>
+      </div>
+
+      <div class="battle-controls compact">
+        <label>
+          Opponent Source
+          <select id="modal-opponent-source">
+            <option value="selected-team">Use selected opponent team</option>
+            <option value="cpu-random-team">Random from my saved teams</option>
+            <option value="cpu-random-api">Random from PokeAPI</option>
+          </select>
+        </label>
+        <label>
+          Quick Setup
+          <button id="random-setup-btn" class="btn ghost" type="button"><i class="fas fa-shuffle"></i> Randomize Setup</button>
+        </label>
+      </div>
+
+      <div class="builder-actions">
+        <button id="start-interactive-battle-btn" class="btn primary"><i class="fas fa-gamepad"></i> Start Interactive Battle</button>
+      </div>
+
+      <div id="battle-status" class="battle-status visual-status">Pick teams (and slots for 1v1), then start your interactive battle.</div>
+    </section>
+  </main>
+
+  <div id="teams-toast" class="teams-toast" role="status" aria-live="polite"></div>
+
+  <div class="confirm-overlay" id="confirm-overlay" aria-hidden="true">
+    <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <h3 id="confirm-title">Confirm Action</h3>
+      <p id="confirm-message">Are you sure?</p>
+      <div class="confirm-actions">
+        <button class="confirm-cancel-btn" id="confirm-cancel-btn">Cancel</button>
+        <button class="confirm-ok-btn" id="confirm-ok-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="arena-modal" class="arena-modal" aria-hidden="true">
+    <div class="arena-modal-card">
+      <div class="arena-modal-header">
+        <h3 id="arena-title">Auto Battle</h3>
+        <button id="arena-modal-close-x" class="arena-modal-close" type="button" aria-label="Close battle">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="arena-stage battle-scene" id="arena-stage">
+        <div class="battle-terrain"></div>
+        <div class="terrain-platform opponent-platform"></div>
+        <div class="terrain-platform player-platform"></div>
+        <img id="arena-opponent-pokeball" class="pokeball opponent-pokeball" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" alt="Opponent Pokeball" />
+        <img id="arena-player-pokeball" class="pokeball player-pokeball" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" alt="Player Pokeball" />
+
+        <article class="fighter player-fighter" id="fighter-left">
+          <img id="left-sprite" alt="Left Pokemon" class="pokemon-sprite player-sprite" />
+          <div class="stats-box">
+            <h4 id="left-name">-</h4>
+            <div class="hp-wrap">
+              <div class="hp-fill" id="left-hp-fill"></div>
+            </div>
+            <p id="left-hp-text">HP: -</p>
+          </div>
+        </article>
+
+        <article class="fighter opponent-fighter" id="fighter-right">
+          <div class="stats-box">
+            <h4 id="right-name">-</h4>
+            <div class="hp-wrap">
+              <div class="hp-fill" id="right-hp-fill"></div>
+            </div>
+            <p id="right-hp-text">HP: -</p>
+          </div>
+          <img id="right-sprite" alt="Right Pokemon" class="pokemon-sprite opponent-sprite" />
+        </article>
+
+        <div id="left-dialogue" class="battle-dialogue left-dialogue"></div>
+        <div id="right-dialogue" class="battle-dialogue right-dialogue"></div>
+      </div>
+      <div id="arena-battle-status" class="battle-status visual-status">Loading...</div>
+      <div class="arena-modal-actions">
+        <button id="arena-modal-close-btn" class="btn ghost" type="button"><i class="fas fa-times"></i> Close</button>
+      </div>
+      <div id="battle-result-overlay" class="battle-result-overlay">
+        <div class="battle-result-card">
+          <h2 id="result-title">Battle Over</h2>
+          <p id="result-message">The battle has ended.</p>
+          <button class="btn primary" onclick="document.getElementById('arena-modal').classList.remove('open'); document.getElementById('battle-result-overlay').style.display='none';"><i class="fas fa-check"></i> OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="battle-modal" class="battle-modal" aria-hidden="true">
+    <div class="battle-modal-card">
+      <button id="battle-modal-close" class="battle-modal-close" type="button" aria-label="Close battle modal">
+        <i class="fas fa-times"></i>
+      </button>
+      <h3>User vs Computer Battle</h3>
+      <p id="battle-modal-loading" class="battle-modal-loading">Loading battle arena...</p>
+
+      <div class="battle-modal-stage battle-scene" id="battle-modal-stage">
+        <div class="battle-terrain"></div>
+        <div class="terrain-platform opponent-platform"></div>
+        <div class="terrain-platform player-platform"></div>
+
+        <article class="modal-fighter player-fighter">
+          <img id="modal-player-sprite" alt="Your Pokemon" class="pokemon-sprite player-sprite" />
+          <div class="stats-box">
+            <h4 id="modal-player-name">-</h4>
+            <div class="hp-wrap"><div id="modal-player-hp-fill" class="hp-fill"></div></div>
+            <p id="modal-player-hp-text">HP: -</p>
+          </div>
+        </article>
+
+        <article class="modal-fighter opponent-fighter">
+          <div class="stats-box">
+            <h4 id="modal-cpu-name">-</h4>
+            <div class="hp-wrap"><div id="modal-cpu-hp-fill" class="hp-fill"></div></div>
+            <p id="modal-cpu-hp-text">HP: -</p>
+          </div>
+          <img id="modal-cpu-sprite" alt="CPU Pokemon" class="pokemon-sprite opponent-sprite" />
+        </article>
+
+        <div id="modal-player-dialogue" class="battle-dialogue left-dialogue"></div>
+        <div id="modal-cpu-dialogue" class="battle-dialogue right-dialogue"></div>
+      </div>
+
+      <div id="battle-modal-text" class="battle-status">Choose a move.</div>
+      <div id="battle-modal-result" class="battle-modal-result" aria-live="polite"></div>
+      <div id="battle-modal-moves" class="battle-modal-moves"></div>
+    </div>
+  </div>
+
+  <script src="Javascript/supabase-client.js"></script>
+  <script src="Javascript/animation-toggle.js"></script>
+  <script src="Javascript/teams.js"></script>
+</body>
+</html>
