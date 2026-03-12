@@ -147,6 +147,9 @@ async function initProfileMenu() {
       showCustomAlert("Signed out successfully!", 1700);
       document.getElementById("welcome-screen").style.display = "block";
       document.querySelector(".container").style.display = "none";
+      if (window.initWelcomeScreen) {
+        window.initWelcomeScreen();
+      }
     });
   }
 
