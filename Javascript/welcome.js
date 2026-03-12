@@ -1,4 +1,50 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  window.initWelcomeScreen = function() {
+    const title = "Welcome to the Pokémon Card Generator!";
+    const subtitle = "Discover Pokémon, their types, stats, evolutions, and more.";
+    const titleEl = document.getElementById("welcome-title");
+    const subEl = document.getElementById("welcome-subtext");
+    const registerTab = document.getElementById("tab-register");
+    const signInTab = document.getElementById("tab-signin");
+    const registerPanel = document.getElementById("panel-register");
+    const signInPanel = document.getElementById("panel-signin");
+    function switchAuthTab(mode) {
+      const isRegister = mode === "register";
+      registerTab.classList.toggle("active", isRegister);
+      signInTab.classList.toggle("active", !isRegister);
+      registerPanel.classList.toggle("active", isRegister);
+      signInPanel.classList.toggle("active", !isRegister);
+      registerTab.setAttribute("aria-selected", String(isRegister));
+      signInTab.setAttribute("aria-selected", String(!isRegister));
+      registerPanel.hidden = !isRegister;
+      signInPanel.hidden = isRegister;
+    }
+    if (registerTab && signInTab && registerPanel && signInPanel) {
+      registerTab.addEventListener("click", () => switchAuthTab("register"));
+      signInTab.addEventListener("click", () => switchAuthTab("signin"));
+    }
+    function typeWriter(text, element, speed = 55, callback = null) {
+      let i = 0;
+      element.textContent = "";
+      function type() {
+        if (i < text.length) {
+          element.textContent += text.charAt(i);
+          i++;
+          setTimeout(type, speed);
+        } else if (callback) {
+          callback();
+        }
+      }
+      type();
+    }
+    if (titleEl && subEl) {
+      typeWriter(title, titleEl, 55, () => {
+        setTimeout(() => {
+          typeWriter(subtitle, subEl, 35);
+        }, 500);
+      });
+    }
+  };
   console.log("welcome.js loaded - DOMContentLoaded fired");
   const welcomeScreenEl = document.getElementById("welcome-screen");
   const generatorContainer = document.querySelector(".container");
