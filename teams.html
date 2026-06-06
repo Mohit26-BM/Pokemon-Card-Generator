@@ -71,48 +71,37 @@
         </div>
       </div>
 
-      <div class="battle-controls compact">
-        <label>
-          You
-          <select id="player-team-select"></select>
-        </label>
-        <label>
-          Opponent
-          <select id="opponent-team-select"></select>
-        </label>
+      <div class="battle-path-toggle">
+        <button id="path-random" class="battle-path-btn active" type="button"><i class="fas fa-shuffle"></i> Random</button>
+        <button id="path-pick" class="battle-path-btn" type="button"><i class="fas fa-hand-pointer"></i> Pick</button>
       </div>
 
-      <div id="duel-slot-pickers" class="battle-controls compact">
-        <label>
-          Your Slot (1v1)
-          <select id="player-slot-select"></select>
-        </label>
-        <label>
-          Opponent Slot (1v1)
-          <select id="opponent-slot-select"></select>
-        </label>
+      <div id="battle-path-random" class="battle-path-panel">
+        <p id="random-path-desc" class="battle-path-desc">Two random Pokemon will be fetched from PokeAPI and battle automatically.</p>
+        <button id="start-random-battle-btn" class="btn primary wide" type="button"><i class="fas fa-bolt"></i> Start Random Battle</button>
       </div>
 
-      <div class="battle-controls compact">
-        <label>
-          Opponent Source
-          <select id="modal-opponent-source">
-            <option value="selected-team">Use selected opponent team</option>
-            <option value="cpu-random-team">Random from my saved teams</option>
-            <option value="cpu-random-api">Random from PokeAPI</option>
-          </select>
-        </label>
-        <label>
-          Quick Setup
-          <button id="random-setup-btn" class="btn ghost" type="button"><i class="fas fa-shuffle"></i> Randomize Setup</button>
-        </label>
+      <div id="battle-path-pick" class="battle-path-panel hidden">
+        <div class="battle-pick-row">
+          <div class="battle-pick-side">
+            <span class="battle-pick-label">You</span>
+            <select id="player-pokemon-select" class="hidden" aria-label="Your Pokemon"></select>
+            <select id="player-team-select" class="hidden" aria-label="Your team"></select>
+          </div>
+          <div class="battle-pick-side">
+            <span class="battle-pick-label">Opponent</span>
+            <div class="opp-source-toggle">
+              <button id="opp-my-team-btn" class="btn tiny active" type="button">My Collection</button>
+              <button id="opp-random-btn" class="btn tiny" type="button">Random</button>
+            </div>
+            <select id="opponent-pokemon-select" class="hidden" aria-label="Opponent Pokemon"></select>
+            <select id="opponent-team-select" class="hidden" aria-label="Opponent team"></select>
+          </div>
+        </div>
+        <button id="start-interactive-battle-btn" class="btn primary wide" type="button"><i class="fas fa-gamepad"></i> Start Interactive Battle</button>
       </div>
 
-      <div class="builder-actions">
-        <button id="start-interactive-battle-btn" class="btn primary"><i class="fas fa-gamepad"></i> Start Interactive Battle</button>
-      </div>
-
-      <div id="battle-status" class="battle-status visual-status">Pick teams (and slots for 1v1), then start your interactive battle.</div>
+      <div id="battle-status" class="battle-status visual-status">Choose a mode and path to start your battle.</div>
     </section>
   </main>
 
@@ -173,11 +162,12 @@
       <div class="arena-modal-actions">
         <button id="arena-modal-close-btn" class="btn ghost" type="button"><i class="fas fa-times"></i> Close</button>
       </div>
-      <div id="battle-result-overlay" class="battle-result-overlay">
+      <div id="battle-result-overlay" class="battle-result-overlay" aria-hidden="true">
         <div class="battle-result-card">
+          <button class="result-close-btn" type="button" aria-label="Close result" onclick="document.getElementById('arena-modal').classList.remove('open'); document.getElementById('battle-result-overlay').style.display='none'; document.getElementById('battle-result-overlay').setAttribute('aria-hidden','true');"><i class="fas fa-times"></i></button>
           <h2 id="result-title">Battle Over</h2>
           <p id="result-message">The battle has ended.</p>
-          <button class="btn primary" onclick="document.getElementById('arena-modal').classList.remove('open'); document.getElementById('battle-result-overlay').style.display='none';"><i class="fas fa-check"></i> OK</button>
+          <button class="battle-result-new-btn btn" type="button" onclick="document.getElementById('arena-modal').classList.remove('open'); document.getElementById('battle-result-overlay').style.display='none'; document.getElementById('battle-result-overlay').setAttribute('aria-hidden','true');"><i class="fas fa-redo"></i> New Battle</button>
         </div>
       </div>
     </div>
@@ -188,7 +178,7 @@
       <button id="battle-modal-close" class="battle-modal-close" type="button" aria-label="Close battle modal">
         <i class="fas fa-times"></i>
       </button>
-      <h3>User vs Computer Battle</h3>
+      <h3 id="battle-modal-title">User vs Computer Battle</h3>
       <p id="battle-modal-loading" class="battle-modal-loading">Loading battle arena...</p>
 
       <div class="battle-modal-stage battle-scene" id="battle-modal-stage">
@@ -218,14 +208,23 @@
         <div id="modal-cpu-dialogue" class="battle-dialogue right-dialogue"></div>
       </div>
 
-      <div id="battle-modal-text" class="battle-status">Choose a move.</div>
-      <div id="battle-modal-result" class="battle-modal-result" aria-live="polite"></div>
+      <div id="battle-modal-text" class="battle-status game-dialog">Choose a move.</div>
       <div id="battle-modal-moves" class="battle-modal-moves"></div>
+
+      <div id="battle-modal-result-overlay" class="battle-result-overlay" aria-hidden="true">
+        <div class="battle-result-card">
+          <button id="battle-modal-result-close" class="result-close-btn" type="button" aria-label="Close result"><i class="fas fa-times"></i></button>
+          <h2 id="modal-result-title">Battle Over</h2>
+          <p id="modal-result-message"></p>
+          <button id="battle-modal-new-battle-btn" class="battle-result-new-btn btn" type="button"><i class="fas fa-redo"></i> New Battle</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <script src="Javascript/supabase-client.js"></script>
   <script src="Javascript/animation-toggle.js"></script>
+  <script src="Javascript/team-moves.js"></script>
   <script src="Javascript/teams.js"></script>
 </body>
 </html>

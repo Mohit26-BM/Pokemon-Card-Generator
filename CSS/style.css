@@ -1214,6 +1214,44 @@ button:hover {
 	color: #2ecc71;
 }
 
+.password-reqs {
+	list-style: none;
+	padding: 0;
+	margin: 2px 0 0;
+	display: none;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.password-reqs.visible {
+	display: flex;
+}
+
+.password-reqs li {
+	font-size: 0.76rem;
+	color: rgba(236, 240, 245, 0.45);
+	padding-left: 2px;
+	transition: color 0.2s;
+}
+
+.password-reqs li::before {
+	content: "✗ ";
+	color: rgba(255, 107, 107, 0.5);
+}
+
+.password-reqs li.met {
+	color: rgba(236, 240, 245, 0.75);
+}
+
+.password-reqs li.met::before {
+	content: "✓ ";
+	color: #2ecc71;
+}
+
+.password-reqs li.unmet::before {
+	color: #ff6b6b;
+}
+
 .signup-form #register-btn {
 	margin: 0.2rem 0 0;
 	width: 100%;

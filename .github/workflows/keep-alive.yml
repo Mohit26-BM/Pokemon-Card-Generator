@@ -1,0 +1,23 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: '0 9 */3 * *'  # every 3 days at 9am UTC
+  workflow_dispatch:        # lets you trigger it manually too
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/trainer_pokemon?limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+          echo "Response status: $STATUS"
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 500 ]; then
+            echo "Supabase is alive."
+          else
+            echo "Unexpected status: $STATUS" && exit 1
+          fi

@@ -4,6 +4,8 @@ const state = {
   teams: [],
   selectedPokemonIds: [],
   battleMode: "1v1",
+  battlePath: "random",
+  opponentSource: "my-team",
   battleTimer: null,
   battleActive: false,
   battle: null,
@@ -11,10 +13,29 @@ const state = {
   modalLoadingTimer: null,
 };
 
-const moveDetailsCache = new Map();
 const pokemonBattleCache = new Map();
-const pokemonApiCache = new Map();
 const POKEAPI_RANDOM_MAX_ID = 1025;
+
+const MOVE_TYPE_COLORS = {
+  normal:   { bg: "#A8A878", text: "#1a1a1a" },
+  fire:     { bg: "#F08030", text: "#1a1a1a" },
+  water:    { bg: "#6890F0", text: "#fff" },
+  electric: { bg: "#F8D030", text: "#1a1a1a" },
+  grass:    { bg: "#78C850", text: "#1a1a1a" },
+  ice:      { bg: "#98D8D8", text: "#1a1a1a" },
+  fighting: { bg: "#C03028", text: "#fff" },
+  poison:   { bg: "#A040A0", text: "#fff" },
+  ground:   { bg: "#E0C068", text: "#1a1a1a" },
+  flying:   { bg: "#A890F0", text: "#1a1a1a" },
+  psychic:  { bg: "#F85888", text: "#1a1a1a" },
+  bug:      { bg: "#A8B820", text: "#1a1a1a" },
+  rock:     { bg: "#B8A038", text: "#fff" },
+  ghost:    { bg: "#705898", text: "#fff" },
+  dragon:   { bg: "#7038F8", text: "#fff" },
+  dark:     { bg: "#705848", text: "#fff" },
+  steel:    { bg: "#B8B8D0", text: "#1a1a1a" },
+  fairy:    { bg: "#EE99AC", text: "#1a1a1a" },
+};
 const BATTLE_PRELOAD_MS = 4500;
 const BATTLE_STEP_MISS_MS = 1500;
 const BATTLE_STEP_STATUS_MS = 1600;
@@ -66,27 +87,25 @@ function wireEvents() {
 
   document.getElementById("mode-1v1").addEventListener("click", () => setBattleMode("1v1"));
   document.getElementById("mode-6v6").addEventListener("click", () => setBattleMode("6v6"));
-  document.getElementById("random-setup-btn").addEventListener("click", randomizeBattleSetup);
+  document.getElementById("path-random").addEventListener("click", () => setBattlePath("random"));
+  document.getElementById("path-pick").addEventListener("click", () => setBattlePath("pick"));
+  document.getElementById("start-random-battle-btn").addEventListener("click", startRandomApiBattleByMode);
   document.getElementById("start-interactive-battle-btn").addEventListener("click", startModalBattleFromSelection);
+  document.getElementById("opp-my-team-btn").addEventListener("click", () => setOpponentSource("my-team"));
+  document.getElementById("opp-random-btn").addEventListener("click", () => setOpponentSource("random-api"));
+  document.getElementById("player-team-select").addEventListener("change", refreshBattleSetupUI);
+  document.getElementById("opponent-team-select").addEventListener("change", refreshBattleSetupUI);
 
   document.getElementById("arena-modal-close-x").addEventListener("click", closeArenaModal);
   document.getElementById("arena-modal-close-btn").addEventListener("click", closeArenaModal);
-
-  document.getElementById("player-team-select").addEventListener("change", () => {
-    refreshDuelSlotSelectors();
-  });
-  document.getElementById("opponent-team-select").addEventListener("change", () => {
-    refreshDuelSlotSelectors();
-  });
-  document.getElementById("modal-opponent-source").addEventListener("change", () => {
-    refreshDuelSlotSelectors();
-  });
 
   const modal = document.getElementById("battle-modal");
   document.getElementById("battle-modal-close").addEventListener("click", closeBattleModal);
   modal.addEventListener("click", (e) => {
     if (e.target === modal) closeBattleModal();
   });
+  document.getElementById("battle-modal-new-battle-btn").addEventListener("click", closeBattleModal);
+  document.getElementById("battle-modal-result-close").addEventListener("click", closeBattleModal);
 }
 
 async function initializeTeamsPage() {
@@ -198,63 +217,6 @@ function normalizeMoves(cardData, fallbackType) {
   });
 }
 
-function toMoveSlug(moveName) {
-  return String(moveName || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-");
-}
-
-async function fetchMoveDetailsByName(moveName) {
-  const slug = toMoveSlug(moveName);
-
-  if (!slug) {
-    return {
-      name: "Tackle",
-      power: 40,
-      type: "normal",
-      accuracy: 100,
-      category: "physical",
-    };
-  }
-
-  if (moveDetailsCache.has(slug)) {
-    return moveDetailsCache.get(slug);
-  }
-
-  try {
-    const res = await fetch(`https://pokeapi.co/api/v2/move/${slug}`);
-    if (!res.ok) {
-      throw new Error(`Move fetch failed (${res.status})`);
-    }
-
-    const data = await res.json();
-    const powerRaw = Number(data.power || 0);
-    const categoryRaw = data.damage_class?.name || "physical";
-    const category = categoryRaw === "special" || categoryRaw === "physical" ? categoryRaw : "status";
-
-    const details = {
-      name: titleCase(data.name || moveName),
-      power: powerRaw > 0 ? powerRaw : 0,
-      type: data.type?.name || "normal",
-      accuracy: Number(data.accuracy || 100),
-      category,
-    };
-
-    moveDetailsCache.set(slug, details);
-    return details;
-  } catch (err) {
-    const fallback = {
-      name: titleCase(moveName),
-      power: 40,
-      type: "normal",
-      accuracy: 100,
-      category: "physical",
-    };
-    moveDetailsCache.set(slug, fallback);
-    return fallback;
-  }
-}
 
 function getUniqueRandomIds(count, maxId) {
   const ids = new Set();
@@ -319,6 +281,7 @@ async function getRandomApiBattleMons(count) {
 
   while (mons.length < count && safety < 20) {
     safety += 1;
+    setBattleStatus(`Fetching Pokemon ${mons.length + 1} of ${count}...`);
     const needed = count - mons.length;
     const ids = getUniqueRandomIds(Math.min(needed * 2, 18), POKEAPI_RANDOM_MAX_ID)
       .filter((id) => !triedIds.has(id));
@@ -566,7 +529,7 @@ function renderSavedTeams() {
         opponentSelect.value = id;
       }
 
-      refreshDuelSlotSelectors();
+      refreshBattleSetupUI();
       toast("Team assigned to battle selector.");
     });
   });
@@ -595,143 +558,118 @@ function renderSavedTeams() {
 }
 
 function renderTeamSelectors() {
-  const playerSelect = document.getElementById("player-team-select");
-  const opponentSelect = document.getElementById("opponent-team-select");
+  const playerTeamSelect = document.getElementById("player-team-select");
+  const opponentTeamSelect = document.getElementById("opponent-team-select");
 
-  const options = ['<option value="">Select a team</option>'];
+  const teamOptions = ['<option value="">Select a team</option>'];
   state.teams.forEach((team) => {
-    options.push(`<option value="${team.id}">${escapeHtml(team.team_name || `Team ${team.id}`)}</option>`);
+    teamOptions.push(`<option value="${team.id}">${escapeHtml(team.team_name || `Team ${team.id}`)}</option>`);
   });
 
-  playerSelect.innerHTML = options.join("");
-  opponentSelect.innerHTML = options.join("");
+  playerTeamSelect.innerHTML = teamOptions.join("");
+  opponentTeamSelect.innerHTML = teamOptions.join("");
 
-  if (state.teams.length >= 1) {
-    playerSelect.value = String(state.teams[0].id);
-  }
-  if (state.teams.length >= 2) {
-    opponentSelect.value = String(state.teams[1].id);
-  }
+  if (state.teams.length >= 1) playerTeamSelect.value = String(state.teams[0].id);
+  if (state.teams.length >= 2) opponentTeamSelect.value = String(state.teams[1].id);
 
-  refreshDuelSlotSelectors();
+  const playerPokemonSelect = document.getElementById("player-pokemon-select");
+  const opponentPokemonSelect = document.getElementById("opponent-pokemon-select");
+  const pokemonOptions = ['<option value="">Pick a Pokemon</option>'];
+  [...state.captured]
+    .sort((a, b) => String(a.pokemon_name || "").localeCompare(String(b.pokemon_name || "")))
+    .forEach((card) => {
+      const id = Number(card.pokemon_id);
+      pokemonOptions.push(`<option value="${id}">${escapeHtml(titleCase(card.pokemon_name || `Pokemon ${id}`))}</option>`);
+    });
+  playerPokemonSelect.innerHTML = pokemonOptions.join("");
+  opponentPokemonSelect.innerHTML = pokemonOptions.join("");
+
+  refreshBattleSetupUI();
 }
 
 function getTeamById(teamId) {
   return state.teams.find((t) => String(t.id) === String(teamId));
 }
 
-function refreshDuelSlotSelectors() {
-  const playerTeam = getTeamById(document.getElementById("player-team-select").value);
-  const opponentTeam = getTeamById(document.getElementById("opponent-team-select").value);
-  const source = document.getElementById("modal-opponent-source")?.value || "selected-team";
+function refreshBattleSetupUI() {
+  const mode = state.battleMode;
+  const path = state.battlePath;
+  const source = state.opponentSource;
+  const isPickPath = path === "pick";
+  const is1v1 = mode === "1v1";
 
-  fillDuelSlotSelect(document.getElementById("player-slot-select"), playerTeam, "Your slot");
-  fillDuelSlotSelect(
-    document.getElementById("opponent-slot-select"),
-    source === "selected-team" ? opponentTeam : null,
-    source === "selected-team" ? "Opponent slot" : "Auto pick"
-  );
+  document.getElementById("player-pokemon-select").classList.toggle("hidden", !isPickPath || !is1v1);
+  document.getElementById("player-team-select").classList.toggle("hidden", !isPickPath || is1v1);
+  document.getElementById("opponent-pokemon-select").classList.toggle("hidden", !isPickPath || !is1v1 || source === "random-api");
+  document.getElementById("opponent-team-select").classList.toggle("hidden", !isPickPath || is1v1 || source === "random-api");
 
-  const opponentSelectLabel = document.getElementById("opponent-team-select")?.closest("label");
-  if (opponentSelectLabel) {
-    opponentSelectLabel.style.display = source === "selected-team" ? "grid" : "none";
+  const oppMyBtn = document.getElementById("opp-my-team-btn");
+  if (oppMyBtn) oppMyBtn.textContent = is1v1 ? "My Collection" : "My Team";
+
+  const desc = document.getElementById("random-path-desc");
+  if (desc) {
+    desc.textContent = is1v1
+      ? "Two random Pokemon will be fetched from PokeAPI and battle automatically."
+      : "Two random 6-Pokemon squads will be fetched from PokeAPI and battle automatically.";
   }
-
-  document.getElementById("duel-slot-pickers").style.display = state.battleMode === "1v1" ? "grid" : "none";
 }
 
-function fillDuelSlotSelect(selectEl, team, labelPrefix) {
-  const options = [`<option value="">${labelPrefix}</option>`];
-  const ids = Array.isArray(team?.pokemon_ids) ? team.pokemon_ids : [];
 
-  ids.forEach((pid, idx) => {
-    const card = getCapturedByPokemonId(pid);
-    const text = card ? titleCase(card.pokemon_name) : `Pokemon ${pid}`;
-    options.push(`<option value="${Number(pid)}">${idx + 1}. ${escapeHtml(text)}</option>`);
-  });
+function setBattlePath(path) {
+  state.battlePath = path;
+  document.getElementById("path-random").classList.toggle("active", path === "random");
+  document.getElementById("path-pick").classList.toggle("active", path === "pick");
+  document.getElementById("battle-path-random").classList.toggle("hidden", path !== "random");
+  document.getElementById("battle-path-pick").classList.toggle("hidden", path !== "pick");
+  refreshBattleSetupUI();
+}
 
-  selectEl.innerHTML = options.join("");
-  if (ids.length > 0) {
-    selectEl.value = String(Number(ids[0]));
-  }
+function setOpponentSource(source) {
+  state.opponentSource = source;
+  document.getElementById("opp-my-team-btn").classList.toggle("active", source === "my-team");
+  document.getElementById("opp-random-btn").classList.toggle("active", source === "random-api");
+  refreshBattleSetupUI();
 }
 
 function setBattleMode(mode) {
   state.battleMode = mode;
   document.getElementById("mode-1v1").classList.toggle("active", mode === "1v1");
   document.getElementById("mode-6v6").classList.toggle("active", mode === "6v6");
-  refreshDuelSlotSelectors();
-  setBattleStatus(
-    mode === "1v1"
-      ? "1v1 mode: choose one Pokemon slot for each side."
-      : "6v6 mode: teams battle in full and you choose moves each turn."
-  );
+  refreshBattleSetupUI();
 }
 
-function pickRandomOptionValue(selectEl) {
-  const candidates = Array.from(selectEl.options || []).filter((opt) => opt.value);
-  if (candidates.length === 0) return "";
-  const choice = candidates[Math.floor(Math.random() * candidates.length)];
-  return choice.value;
-}
-
-function randomizeBattleTeams() {
-  const playerSelect = document.getElementById("player-team-select");
-  const opponentSelect = document.getElementById("opponent-team-select");
-
-  if (state.teams.length < 2) {
-    toast("Create at least 2 teams to randomize team battles.");
-    return;
-  }
-
-  const indices = state.teams.map((_, idx) => idx);
-  const leftIdx = indices[Math.floor(Math.random() * indices.length)];
-  let rightIdx = leftIdx;
-  while (rightIdx === leftIdx) {
-    rightIdx = indices[Math.floor(Math.random() * indices.length)];
-  }
-
-  playerSelect.value = String(state.teams[leftIdx].id);
-  opponentSelect.value = String(state.teams[rightIdx].id);
-  refreshDuelSlotSelectors();
-  toast("Random teams selected.");
-}
-
-function randomizeDuelSlots() {
-  if (state.battleMode !== "1v1") {
-    toast("Switch to 1v1 mode to randomize duel picks.");
-    return;
-  }
-
-  const playerSlot = document.getElementById("player-slot-select");
-  const opponentSlot = document.getElementById("opponent-slot-select");
-
-  const leftVal = pickRandomOptionValue(playerSlot);
-  const rightVal = pickRandomOptionValue(opponentSlot);
-
-  if (!leftVal || !rightVal) {
-    toast("Select valid teams first, then randomize 1v1 picks.");
-    return;
-  }
-
-  playerSlot.value = leftVal;
-  opponentSlot.value = rightVal;
-  toast("Random 1v1 Pokemon selected.");
-}
-
-function randomizeBattleSetup() {
-  randomizeBattleTeams();
-  if (state.battleMode === "1v1") {
-    randomizeDuelSlots();
-  }
-}
 
 async function startRandomApiBattleByMode() {
-  if (state.battleMode === "6v6") {
-    await startRandomSixVsSixFight();
-    return;
+  const btn = document.getElementById("start-random-battle-btn");
+  const mode = state.battleMode;
+  const count = mode === "6v6" ? 12 : 2;
+  const label = mode === "6v6" ? "6 Pokemon each" : "2 Pokemon";
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Fetching ${label}...`;
   }
-  await startRandomPokemonFight();
+
+  try {
+    setBattleStatus(`Loading random Pokemon from PokeAPI...`);
+    const mons = await getRandomApiBattleMons(count);
+
+    if (mons.length < count) {
+      toast("Could not load random Pokemon right now. Please try again.");
+      return;
+    }
+
+    if (mode === "6v6") {
+      openBattleModal(mons.slice(0, 6).map(cloneMon), mons.slice(6, 12).map(cloneMon), "Random CPU", "6v6");
+    } else {
+      openBattleModal([cloneMon(mons[0])], [cloneMon(mons[1])], "Random CPU", "1v1");
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-bolt"></i> Start Random Battle';
+    }
+  }
 }
 
 async function startRandomPokemonFight() {
@@ -797,41 +735,6 @@ async function buildTeamForBattle(team, singlePokemonId = null) {
   return Promise.all(cards.map((card) => buildBattleMonAsync(card)));
 }
 
-async function startBattle() {
-  stopBattle();
-
-  const playerTeam = getTeamById(document.getElementById("player-team-select").value);
-  const opponentTeam = getTeamById(document.getElementById("opponent-team-select").value);
-
-  if (!playerTeam || !opponentTeam) {
-    toast("Select both teams first.");
-    return;
-  }
-
-  const playerSingleId = Number(document.getElementById("player-slot-select").value || 0);
-  const opponentSingleId = Number(document.getElementById("opponent-slot-select").value || 0);
-
-  setBattleStatus("Loading move data for battle...");
-  const playerMons = (await buildTeamForBattle(playerTeam, state.battleMode === "1v1" ? playerSingleId : null)).map(cloneMon);
-  const opponentMons = (await buildTeamForBattle(opponentTeam, state.battleMode === "1v1" ? opponentSingleId : null)).map(cloneMon);
-
-  if (state.battleMode === "1v1" && (!playerSingleId || !opponentSingleId)) {
-    toast("Select one Pokemon for each side in 1v1 mode.");
-    return;
-  }
-
-  if (playerMons.length === 0 || opponentMons.length === 0) {
-    toast("Selected teams are missing Pokemon from your collection.");
-    return;
-  }
-
-  beginBattle(
-    playerMons,
-    opponentMons,
-    playerTeam.team_name || "Player Team",
-    opponentTeam.team_name || "Opponent Team"
-  );
-}
 
 function beginBattle(playerMons, opponentMons, leftTeamName, rightTeamName) {
   state.battle = {
@@ -845,7 +748,6 @@ function beginBattle(playerMons, opponentMons, leftTeamName, rightTeamName) {
   };
 
   state.battleActive = true;
-  document.getElementById("battle-log").innerHTML = "";
   setBattleStatus(`Battle started: ${state.battle.leftTeamName} vs ${state.battle.rightTeamName}`);
 
   openArenaModal(leftTeamName, rightTeamName);
@@ -1091,84 +993,86 @@ function getFallbackMove(mon) {
 }
 
 async function startModalBattleFromSelection() {
-  const playerTeam = getTeamById(document.getElementById("player-team-select").value);
-  if (!playerTeam) {
-    toast("Select your team first.");
-    return;
-  }
-
   const mode = state.battleMode;
-  const playerSingleId = Number(document.getElementById("player-slot-select").value || 0);
-  const opponentSingleId = Number(document.getElementById("opponent-slot-select").value || 0);
-  const source = document.getElementById("modal-opponent-source")?.value || "selected-team";
-
   let playerMons = [];
   let cpuMons = [];
   let cpuLabel = "CPU";
 
-  setBattleStatus("Preparing User vs CPU battle...");
-
-  if (mode === "1v1") {
-    if (!playerSingleId) {
-      toast("Pick your 1v1 slot first.");
-      return;
-    }
-    playerMons = await buildTeamForBattle(playerTeam, playerSingleId);
-  } else {
-    playerMons = await buildTeamForBattle(playerTeam);
+  const btn = document.getElementById("start-interactive-battle-btn");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing Battle...';
   }
 
-  if (source === "selected-team") {
-    const opponentTeam = getTeamById(document.getElementById("opponent-team-select").value);
-    if (!opponentTeam) {
-      toast("Select an opponent team or change CPU source.");
-      return;
-    }
-    cpuLabel = opponentTeam.team_name || "CPU Team";
+  try {
+    setBattleStatus("Preparing battle...");
+
     if (mode === "1v1") {
-      if (!opponentSingleId) {
-        toast("Pick opponent 1v1 slot first.");
+      const playerPokemonId = Number(document.getElementById("player-pokemon-select").value || 0);
+      if (!playerPokemonId) {
+        toast("Pick your Pokemon first.");
         return;
       }
-      cpuMons = await buildTeamForBattle(opponentTeam, opponentSingleId);
-    } else {
-      cpuMons = await buildTeamForBattle(opponentTeam);
-    }
-  } else if (source === "cpu-random-team") {
-    const teamPool = state.teams.filter((t) => String(t.id) !== String(playerTeam.id));
-    if (teamPool.length === 0) {
-      toast("No other saved team available for CPU random pick.");
-      return;
-    }
-    const randomTeam = teamPool[Math.floor(Math.random() * teamPool.length)];
-    cpuLabel = `${randomTeam.team_name || "CPU Team"} (Random)`;
-    if (mode === "1v1") {
-      const ids = Array.isArray(randomTeam.pokemon_ids) ? randomTeam.pokemon_ids : [];
-      const randomId = Number(ids[Math.floor(Math.random() * ids.length)] || 0);
-      if (!randomId) {
-        toast("Random CPU team has no valid Pokemon.");
+      const playerCard = getCapturedByPokemonId(playerPokemonId);
+      if (!playerCard) {
+        toast("Pokemon not found in collection.");
         return;
       }
-      cpuMons = await buildTeamForBattle(randomTeam, randomId);
+      playerMons = [await buildBattleMonAsync(playerCard)];
     } else {
-      cpuMons = await buildTeamForBattle(randomTeam);
+      const playerTeam = getTeamById(document.getElementById("player-team-select").value);
+      if (!playerTeam) {
+        toast("Select your team first.");
+        return;
+      }
+      playerMons = await buildTeamForBattle(playerTeam);
     }
-  } else {
-    cpuLabel = "CPU Random (PokeAPI)";
-    const needed = mode === "1v1" ? 1 : 6;
-    setBattleStatus(`Loading ${needed} random Pokemon from PokeAPI...`);
-    cpuMons = await getRandomApiBattleMons(needed);
+
+    if (state.opponentSource === "my-team") {
+      if (mode === "1v1") {
+        const opponentPokemonId = Number(document.getElementById("opponent-pokemon-select").value || 0);
+        if (!opponentPokemonId) {
+          toast("Pick opponent's Pokemon first.");
+          return;
+        }
+        const opponentCard = getCapturedByPokemonId(opponentPokemonId);
+        if (!opponentCard) {
+          toast("Opponent Pokemon not found.");
+          return;
+        }
+        cpuLabel = titleCase(opponentCard.pokemon_name || "Opponent");
+        cpuMons = [await buildBattleMonAsync(opponentCard)];
+      } else {
+        const opponentTeam = getTeamById(document.getElementById("opponent-team-select").value);
+        if (!opponentTeam) {
+          toast("Select opponent team.");
+          return;
+        }
+        cpuLabel = opponentTeam.team_name || "CPU Team";
+        cpuMons = await buildTeamForBattle(opponentTeam);
+      }
+    } else {
+      cpuLabel = "Random (PokeAPI)";
+      const needed = mode === "1v1" ? 1 : 6;
+      setBattleStatus(`Loading ${needed} random Pokemon from PokeAPI...`);
+      cpuMons = await getRandomApiBattleMons(needed);
+    }
+
+    playerMons = playerMons.map(cloneMon).filter(Boolean);
+    cpuMons = cpuMons.map(cloneMon).filter(Boolean);
+
+    if (playerMons.length === 0 || cpuMons.length === 0) {
+      toast("Could not prepare battle. Check selections and try again.");
+      return;
+    }
+
+    openBattleModal(playerMons, cpuMons, cpuLabel, mode);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-gamepad"></i> Start Interactive Battle';
+    }
   }
-
-  playerMons = playerMons.map(cloneMon).filter(Boolean);
-  cpuMons = cpuMons.map(cloneMon).filter(Boolean);
-
-  if (playerMons.length === 0 || cpuMons.length === 0) {
-    toast("Could not prepare modal battle. Check team selections and try again.");
-    return;
-  }
-
-  openBattleModal(playerMons, cpuMons, cpuLabel, mode);
 }
 
 function openBattleModal(playerMons, cpuMons, cpuLabel, mode) {
@@ -1177,6 +1081,8 @@ function openBattleModal(playerMons, cpuMons, cpuLabel, mode) {
   const modal = document.getElementById("battle-modal");
   const loading = document.getElementById("battle-modal-loading");
   const text = document.getElementById("battle-modal-text");
+  const titleEl = document.getElementById("battle-modal-title");
+  if (titleEl) titleEl.textContent = `You vs ${cpuLabel || "CPU"}`;
 
   state.modalBattle = {
     mode,
@@ -1224,17 +1130,19 @@ function closeBattleModal() {
 }
 
 function showModalBattleResult(title, message) {
-  const result = document.getElementById("battle-modal-result");
-  if (!result) return;
-  result.textContent = `${title} ${message}`;
-  result.classList.add("show");
+  const overlay = document.getElementById("battle-modal-result-overlay");
+  if (!overlay) return;
+  document.getElementById("modal-result-title").textContent = title;
+  document.getElementById("modal-result-message").textContent = message;
+  overlay.style.display = "flex";
+  overlay.setAttribute("aria-hidden", "false");
 }
 
 function hideModalBattleResult() {
-  const result = document.getElementById("battle-modal-result");
-  if (!result) return;
-  result.textContent = "";
-  result.classList.remove("show");
+  const overlay = document.getElementById("battle-modal-result-overlay");
+  if (!overlay) return;
+  overlay.style.display = "none";
+  overlay.setAttribute("aria-hidden", "true");
 }
 
 function renderModalBattle() {
@@ -1283,6 +1191,11 @@ function renderModalMoveButtons(disabled) {
     btn.className = "move-action-btn";
     btn.textContent = `${idx + 1}. ${titleCase(move.name)}`;
     btn.disabled = disabled || battle.busy || battle.over;
+
+    const typeStyle = MOVE_TYPE_COLORS[move.type] || { bg: "#8a8a9a", text: "#fff" };
+    btn.style.background = typeStyle.bg;
+    btn.style.color = typeStyle.text;
+
     btn.addEventListener("click", () => playerMoveTurn(move));
     wrap.appendChild(btn);
   });
@@ -1754,191 +1667,3 @@ function showConfirm(message, okLabel = "Confirm") {
   });
 }
 
-function moveBattleScore(move, monTypes, stats) {
-  const power = Number(move.power || 0);
-  const accuracy = Math.max(1, Number(move.accuracy || 100));
-  const stab = monTypes.includes(move.type) ? 1.35 : 1;
-
-  let attackBias = 1;
-  if (move.category === "special") {
-    attackBias = (stats.spAttack || 1) >= (stats.attack || 1) ? 1.15 : 0.95;
-  } else if (move.category === "physical") {
-    attackBias = (stats.attack || 1) >= (stats.spAttack || 1) ? 1.15 : 0.95;
-  }
-
-  return (power * (accuracy / 100)) * stab * attackBias;
-}
-
-// Game-like move ranking:
-// Prefer modern version groups + practical learn methods, then rank by
-// damage potential (power, accuracy, STAB and Atk/Sp.Atk fit).
-const MOVE_VERSION_PRIORITY = [
-  "scarlet-violet",
-  "sword-shield",
-  "ultra-sun-ultra-moon",
-  "sun-moon",
-  "omega-ruby-alpha-sapphire",
-  "x-y",
-  "black-2-white-2",
-];
-
-const MOVE_LEARN_METHOD_PRIORITY = {
-  "level-up": 0,
-  machine: 1,
-  tutor: 2,
-};
-
-function getBestLearnDetail(versionDetails = []) {
-  let best = null;
-
-  versionDetails.forEach((detail) => {
-    const method = detail?.move_learn_method?.name || "";
-    if (!(method in MOVE_LEARN_METHOD_PRIORITY)) return;
-
-    const version = detail?.version_group?.name || "";
-    const versionRank = MOVE_VERSION_PRIORITY.indexOf(version);
-    const safeVersionRank = versionRank === -1 ? 999 : versionRank;
-    const methodRank = MOVE_LEARN_METHOD_PRIORITY[method];
-    const level = Number(detail?.level_learned_at || 0);
-    const candidate = { versionRank: safeVersionRank, methodRank, level };
-
-    if (!best) {
-      best = candidate;
-      return;
-    }
-    if (candidate.versionRank < best.versionRank) {
-      best = candidate;
-      return;
-    }
-    if (candidate.versionRank === best.versionRank && candidate.methodRank < best.methodRank) {
-      best = candidate;
-      return;
-    }
-    if (
-      candidate.versionRank === best.versionRank &&
-      candidate.methodRank === best.methodRank &&
-      candidate.level > best.level
-    ) {
-      best = candidate;
-    }
-  });
-
-  return best;
-}
-
-function fallbackMoveSet(monTypes) {
-  const primary = monTypes[0] || "normal";
-  return [
-    { name: "Tackle", power: 40, type: "normal", accuracy: 100, category: "physical" },
-    { name: "Swift", power: 60, type: "normal", accuracy: 100, category: "special" },
-    { name: "Quick Attack", power: 40, type: "normal", accuracy: 100, category: "physical" },
-    { name: titleCase(primary), power: 70, type: primary, accuracy: 100, category: "special" },
-  ];
-}
-
-async function getPokemonApiDataById(id) {
-  const numericId = Number(id);
-  if (!numericId) return null;
-
-  if (pokemonApiCache.has(numericId)) {
-    return pokemonApiCache.get(numericId);
-  }
-
-  try {
-    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${numericId}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    pokemonApiCache.set(numericId, data);
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-async function selectBestMovesForPokemon(id, monTypes, stats, fallbackMoves = []) {
-  const apiData = await getPokemonApiDataById(id);
-  const fallback = fallbackMoves.length > 0 ? fallbackMoves : fallbackMoveSet(monTypes);
-  if (!apiData) return fallback.slice(0, 4);
-
-  const learned = (apiData.moves || [])
-    .map((entry) => {
-      const bestDetail = getBestLearnDetail(entry?.version_group_details || []);
-      if (!bestDetail) return null;
-      return { moveName: entry?.move?.name || "", ...bestDetail };
-    })
-    .filter(Boolean)
-    .sort((a, b) => {
-      if (a.versionRank !== b.versionRank) return a.versionRank - b.versionRank;
-      if (a.methodRank !== b.methodRank) return a.methodRank - b.methodRank;
-      return b.level - a.level;
-    });
-
-  const seen = new Set();
-  const candidateNames = [];
-  learned.forEach((entry) => {
-    const name = entry.moveName;
-    if (!name || seen.has(name)) return;
-    seen.add(name);
-    candidateNames.push(name);
-  });
-
-  const strongMoves = [];
-  const maxChecks = Math.min(candidateNames.length, 90);
-  for (let i = 0; i < maxChecks; i += 1) {
-    const details = await fetchMoveDetailsByName(candidateNames[i]);
-    if (!details) continue;
-
-    const normalized = {
-      name: details.name || titleCase(candidateNames[i]),
-      power: Number(details.power || 0),
-      type: details.type || "normal",
-      accuracy: Number(details.accuracy || 100),
-      category: details.category || "physical",
-    };
-
-    if (normalized.power <= 0) continue;
-    if (normalized.accuracy < 75) continue;
-    if (normalized.category !== "physical" && normalized.category !== "special") continue;
-    strongMoves.push(normalized);
-  }
-
-  if (strongMoves.length === 0) return fallback.slice(0, 4);
-
-  const typedBest = new Map();
-  strongMoves.forEach((mv) => {
-    const prev = typedBest.get(mv.type);
-    if (!prev || moveBattleScore(mv, monTypes, stats) > moveBattleScore(prev, monTypes, stats)) {
-      typedBest.set(mv.type, mv);
-    }
-  });
-
-  const selected = [];
-  const pickedNames = new Set();
-
-  // Prefer at least one damaging move per Pokemon type when available.
-  monTypes.forEach((t) => {
-    const stabMove = typedBest.get(t);
-    if (stabMove && !pickedNames.has(stabMove.name.toLowerCase())) {
-      selected.push(stabMove);
-      pickedNames.add(stabMove.name.toLowerCase());
-    }
-  });
-
-  const ranked = [...strongMoves].sort((a, b) => {
-    return moveBattleScore(b, monTypes, stats) - moveBattleScore(a, monTypes, stats);
-  });
-
-  for (const mv of ranked) {
-    if (selected.length >= 4) break;
-    const key = mv.name.toLowerCase();
-    if (pickedNames.has(key)) continue;
-    selected.push(mv);
-    pickedNames.add(key);
-  }
-
-  while (selected.length < 4) {
-    selected.push(fallback[selected.length] || fallback[0]);
-  }
-
-  return selected.slice(0, 4);
-}

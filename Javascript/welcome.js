@@ -201,19 +201,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 500); 
   });
 
-  function checkPasswordStrength(password, fillId, textId) {
+  function checkPasswordStrength(password, fillId, textId, reqsId) {
     const fill = document.getElementById(fillId);
     const text = document.getElementById(textId);
     if (!fill || !text) return;
 
-    let strength = 0;
-    const length = password.length;
-
-    if (length >= 8) strength++;
-    if (length >= 12) strength++;
-    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
-    if (/\d/.test(password)) strength++;
-    if (/[!@#$%^&*()_+\-=\[\]{};':",./<>?]/.test(password)) strength++;
+    const checks = {
+      length:  password.length >= 8,
+      upper:   /[A-Z]/.test(password),
+      lower:   /[a-z]/.test(password),
+      number:  /\d/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':",./<>?]/.test(password),
+    };
+    const passed = Object.values(checks).filter(Boolean).length;
 
     fill.classList.remove("weak", "fair", "good", "strong");
     text.classList.remove("text-weak", "text-fair", "text-good", "text-strong");
@@ -221,22 +221,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!password) {
       fill.style.width = "0%";
       text.textContent = "";
-    } else if (strength < 2) {
-      fill.classList.add("weak");
-      text.classList.add("text-weak");
-      text.textContent = "Weak";
-    } else if (strength < 3) {
-      fill.classList.add("fair");
-      text.classList.add("text-fair");
-      text.textContent = "Fair";
-    } else if (strength < 4) {
-      fill.classList.add("good");
-      text.classList.add("text-good");
-      text.textContent = "Good";
+    } else if (passed <= 2) {
+      fill.classList.add("weak");   text.classList.add("text-weak");   text.textContent = "Weak";
+    } else if (passed === 3) {
+      fill.classList.add("fair");   text.classList.add("text-fair");   text.textContent = "Fair";
+    } else if (passed === 4) {
+      fill.classList.add("good");   text.classList.add("text-good");   text.textContent = "Good";
     } else {
-      fill.classList.add("strong");
-      text.classList.add("text-strong");
-      text.textContent = "Strong";
+      fill.classList.add("strong"); text.classList.add("text-strong"); text.textContent = "Strong";
+    }
+
+    if (reqsId) {
+      const reqsList = document.getElementById(reqsId);
+      if (reqsList) {
+        reqsList.classList.toggle("visible", password.length > 0);
+        const reqMap = {
+          "req-length":  checks.length,
+          "req-upper":   checks.upper,
+          "req-lower":   checks.lower,
+          "req-number":  checks.number,
+          "req-special": checks.special,
+        };
+        Object.entries(reqMap).forEach(([id, met]) => {
+          const li = document.getElementById(id);
+          if (!li) return;
+          li.classList.toggle("met", met);
+          li.classList.toggle("unmet", !met && password.length > 0);
+        });
+      }
     }
   }
 
@@ -245,7 +257,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (registerPass) {
     registerPass.addEventListener("input", (e) => {
-      checkPasswordStrength(e.target.value, "strength-fill-register", "strength-text-register");
+      checkPasswordStrength(e.target.value, "strength-fill-register", "strength-text-register", "password-reqs");
     });
   }
 
@@ -313,10 +325,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      if (password.length < 8) {
-        console.log("Validation failed - password too short");
-        showAlert("Password must be at least 8 characters", "error");
-        return;
+      const pwChecks = {
+        length:  password.length >= 8,
+        upper:   /[A-Z]/.test(password),
+        lower:   /[a-z]/.test(password),
+        number:  /\d/.test(password),
+        special: /[!@#$%^&*()_+\-=\[\]{};':",./<>?]/.test(password),
+      };
+      if (!pwChecks.length) {
+        showAlert("Password must be at least 8 characters.", "error"); return;
+      }
+      if (!pwChecks.upper || !pwChecks.lower) {
+        showAlert("Password must include both uppercase and lowercase letters.", "error"); return;
+      }
+      if (!pwChecks.number) {
+        showAlert("Password must include at least one number.", "error"); return;
+      }
+      if (!pwChecks.special) {
+        showAlert("Password must include at least one special character (!@#$…).", "error"); return;
       }
 
       registerBtn.disabled = true;
