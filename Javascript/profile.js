@@ -37,7 +37,7 @@ function showToast(message, type = "success") {
 async function loadProfile() {
   currentUser = await getCurrentUser();
   if (!currentUser) {
-    window.location.href = "index.html";
+    window.location.href = "../index.html";
     return;
   }
 
@@ -278,7 +278,7 @@ document.getElementById("save-profile-btn")?.addEventListener("click", async () 
 document.getElementById("signout-btn")?.addEventListener("click", async () => {
   const result = await signOutUser();
   if (result.success) {
-    window.location.href = "index.html";
+    window.location.href = "../index.html";
   } else {
     showToast(result.message, "error");
   }

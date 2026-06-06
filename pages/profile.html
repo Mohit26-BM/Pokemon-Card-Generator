@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trainer Profile</title>
-  <link rel="icon" type="image/png" href="apple-touch-icon.png" />
-  <link rel="stylesheet" href="CSS/profile.css" />
+  <link rel="icon" type="image/png" href="../apple-touch-icon.png" />
+  <link rel="stylesheet" href="../CSS/profile.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <script src="https://kit.fontawesome.com/df00dcb1ce.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4"></script>
@@ -14,13 +14,12 @@
 
   <div class="bg-particles" id="bg-particles"></div>
 
-  <!-- Header / Nav -->
   <header class="profile-header">
     <div class="header-left">
       <h1 class="page-title"><i class="fas fa-user-circle"></i> Trainer Profile</h1>
     </div>
     <nav class="profile-nav">
-      <a href="index.html" class="pnav-link"><i class="fas fa-bolt"></i> Generator</a>
+      <a href="../index.html" class="pnav-link"><i class="fas fa-bolt"></i> Generator</a>
       <a href="recent.html" class="pnav-link"><i class="fas fa-history"></i> Recent</a>
       <a href="collection.html" class="pnav-link"><i class="fas fa-layer-group"></i> Collection</a>
       <a href="teams.html" class="pnav-link"><i class="fas fa-people-group"></i> My Teams</a>
@@ -34,13 +33,11 @@
     </nav>
   </header>
 
-  <!-- Main layout -->
   <main class="profile-layout">
 
-    <!-- Avatar + identity card -->
     <section class="profile-card glass-card">
       <div class="avatar-wrapper">
-        <img id="avatar-img" src="Images/default-avatar.png" alt="Trainer Avatar" class="avatar-img" />
+        <img id="avatar-img" src="../Images/default-avatar.png" alt="Trainer Avatar" class="avatar-img" />
         <label class="avatar-upload-btn" for="avatar-input" title="Change avatar">
           <i class="fas fa-camera"></i>
         </label>
@@ -68,7 +65,6 @@
       </div>
     </section>
 
-    <!-- Preferences card -->
     <section class="profile-card glass-card">
       <h2 class="card-section-title"><i class="fas fa-sliders-h"></i> Preferences</h2>
 
@@ -102,7 +98,6 @@
       </label>
     </section>
 
-    <!-- Trainer stats card (read-only) -->
     <section class="profile-card glass-card stats-card">
       <h2 class="card-section-title"><i class="fas fa-chart-bar"></i> Trainer Stats</h2>
       <div class="stats-grid">
@@ -125,7 +120,6 @@
       </div>
     </section>
 
-    <!-- Save button -->
     <div class="save-row">
       <button class="save-btn" id="save-profile-btn">
         <i class="fas fa-save"></i> Save Profile
@@ -134,11 +128,10 @@
 
   </main>
 
-  <!-- Toast notification -->
   <div class="toast" id="toast"></div>
 
-  <script src="Javascript/supabase-client.js"></script>
-  <script src="Javascript/animation-toggle.js"></script>
-  <script src="Javascript/profile.js"></script>
+  <script src="../Javascript/supabase-client.js"></script>
+  <script src="../Javascript/animation-toggle.js"></script>
+  <script src="../Javascript/profile.js"></script>
 </body>
 </html>

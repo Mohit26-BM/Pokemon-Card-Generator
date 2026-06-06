@@ -146,7 +146,7 @@ function disablePage(message) {
     <section class="panel">
       <h2>Access Required</h2>
       <p>${escapeHtml(message)}</p>
-      <p><a href="index.html" style="color:#9ad8ff">Back to Generator</a></p>
+      <p><a href="../index.html" style="color:#9ad8ff">Back to Generator</a></p>
     </section>
   `;
 }
